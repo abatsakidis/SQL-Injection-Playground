@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SQL Injection Playground</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+    :root {
+      --bg:#000;
+      --fg:#00ff88;
+      --accent:#0f0;
+    }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font-family:'Fira Code',monospace}
+    .terminal{max-width:840px;margin:40px auto;background:#111;padding:24px;border:1px solid var(--accent);box-shadow:0 0 18px #0f0;border-radius:6px}
+    h2{margin-top:0;color:var(--accent)}
+    input,select,button{background:#000;border:1px solid var(--accent);color:var(--fg);padding:6px 8px;font-family:'Fira Code',monospace;margin-top:8px;border-radius:4px}
+    button:hover{background:var(--fg);color:#000;cursor:pointer}
+    pre{background:#000;padding:12px;border:1px solid var(--accent);white-space:pre-wrap;word-break:break-all;border-radius:4px;margin-top:16px;min-height:60px}
+    .highlight{color:#ff0;font-weight:600}
+    table{border-collapse:collapse;width:100%;margin-top:20px}
+    th,td{border:1px solid var(--accent);padding:6px 8px;text-align:left}
+    th{background:#002b00}
+    .tooltip {
+      margin-top: 20px;
+      padding: 16px;
+      background: #001a00;
+      border: 1px dashed var(--accent);
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    .tooltip code {
+      color: #ff0;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <h2>SQL Injection Playground</h2>
+    <p>Try to sign in as <span class="highlight">admin</span> using SQL Injection.</p>
+
+    <label for="mode">Mode:</label>
+    <select id="mode" onchange="clearUI()">
+      <option value="beginner" selected>Beginner</option>
+      <option value="advanced">Advanced</option>
+    </select>
+
+    <form id="login-form">
+      <div style="margin-top:12px">
+        <label>Username: <input type="text" id="username" /></label>
+      </div>
+      <div>
+        <label>Password: <input type="password" id="password" /></label>
+      </div>
+      <button type="submit">Login</button>
+    </form>
+
+    <pre id="queryDisplay"></pre>
+    <pre id="log"></pre>
+
+    <div id="dumpContainer" style="display:none">
+      <h3>📄 Dumped Users Table</h3>
+      <table id="resultTable"></table>
+    </div>
+
+    <div class="tooltip">
+      <strong>💡 SQL Injection Examples (Advanced Mode):</strong><br>
+      <ul>
+        <li><code>' OR 1=1 --</code></li>
+        <li><code>admin' --</code></li>
+        <li><code>guest' OR '1'='1</code></li>
+        <li><code>' OR 'a'='a</code></li>
+        <li><code>admin</code> + <code>' OR '1'='1</code> as password</li>
+      </ul>
+    </div>
+  </div>
+
+<script>
+const dummyUsers = [
+  { id: 1, username: 'admin', password: 'admin123', role: 'admin' },
+  { id: 2, username: 'guest', password: 'guest', role: 'user' },
+  { id: 3, username: 'john', password: 'johnpass', role: 'user' },
+];
+
+const queryDisplay = document.getElementById('queryDisplay');
+const log = document.getElementById('log');
+const resultTable = document.getElementById('resultTable');
+const dumpContainer = document.getElementById('dumpContainer');
+const modeSelect = document.getElementById('mode');
+
+function clearUI() {
+  queryDisplay.textContent = '';
+  log.textContent = '';
+  resultTable.innerHTML = '';
+  dumpContainer.style.display = 'none';
+}
+
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  const mode = modeSelect.value;
+
+  let simulatedQuery = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+  queryDisplay.textContent = simulatedQuery;
+
+  if (mode === 'beginner') {
+    const user = dummyUsers.find(u => u.username === username && u.password === password);
+    if (user) {
+      log.textContent = `✅ Welcome ${user.username} (${user.role})`;
+    } else {
+      log.textContent = '❌ Login failed';
+    }
+  } else if (mode === 'advanced') {
+	if (username.includes("'") || password.includes("'")) {
+	  log.textContent = "⚠️ Detected SQL Injection!";
+	  dumpContainer.style.display = 'block';
+	  dumpUsers();
+	} else {
+      const user = dummyUsers.find(u => u.username === username && u.password === password);
+      if (user) {
+        log.textContent = `✅ Welcome ${user.username} (${user.role})`;
+      } else {
+        log.textContent = '❌ Login failed';
+      }
+    }
+  }
+});
+
+function dumpUsers() {
+  resultTable.innerHTML = '<tr><th>ID</th><th>Username</th><th>Password</th><th>Role</th></tr>';
+  for (const user of dummyUsers) {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${user.id}</td><td>${user.username}</td><td>${user.password}</td><td>${user.role}</td>`;
+    resultTable.appendChild(row);
+  }
+}
+</script>
+</body>
+</html>
