@@ -38,5 +38,7 @@
 
 This tool is for **educational purposes only**. It does **not connect to a real database** and simulates SQL injection behavior entirely on the frontend. Do **not** use real attack techniques on systems you do not own or have permission to test.
 
-## 📁 Project Structure
+## 📜 License
+
+MIT License – feel free to modify and use for non-commercial educational purposes.
 
